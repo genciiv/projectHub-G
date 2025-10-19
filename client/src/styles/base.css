@@ -190,3 +190,5 @@ textarea.input{ resize: vertical; }
   background: color-mix(in oklab, var(--surface) 85%, var(--bg));
 }
 .pill:focus-visible { outline: none; box-shadow: var(--ring); }
+.star-btn { background: none; border: none; padding: 0; cursor: pointer; }
+.star-btn:focus-visible { outline: none; box-shadow: var(--ring); }
