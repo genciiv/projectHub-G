@@ -15,6 +15,7 @@ const ApplicationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+ApplicationSchema.index({ applicant: 1 }); // për /me/applications
 
 ApplicationSchema.index({ project: 1, applicant: 1 }, { unique: true }); // 1 aplikim per user per projekt
 

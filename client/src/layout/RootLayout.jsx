@@ -1,9 +1,29 @@
-import React from "react";
+// import React...
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 
 export default function RootLayout({ children }) {
   const { user } = useAuth();
+
+  // Ruaj gjendjen e temës në localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark")
+      document.documentElement.setAttribute("data-theme", "dark");
+  }, []);
+
+  function toggleTheme() {
+    const isDark =
+      document.documentElement.getAttribute("data-theme") === "dark";
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    }
+  }
 
   return (
     <>
@@ -13,23 +33,26 @@ export default function RootLayout({ children }) {
             ProjectHub
           </Link>
           <nav className="nav">
-            <Link to="/projects" className="btn">
+            <Link to="/projects" className="btn btn--ghost">
               Projects
             </Link>
-            <Link to="/post-project" className="btn">
-              Posto Projekt
-            </Link>
-
-            <Link to="/blog" className="btn">
+            <Link to="/blog" className="btn btn--ghost">
               Blog
             </Link>
+            <button
+              className="btn btn--outline"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              Theme
+            </button>
             {user ? (
               <Link to="/dashboard" className="btn">
                 Dashboard
               </Link>
             ) : (
               <>
-                <Link to="/login" className="btn">
+                <Link to="/login" className="btn btn--outline">
                   Login
                 </Link>
                 <Link to="/register" className="btn">
@@ -40,7 +63,7 @@ export default function RootLayout({ children }) {
           </nav>
         </div>
       </header>
-      <main>{children}</main>
+      <main className="section">{children}</main>
     </>
   );
 }

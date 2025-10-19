@@ -17,5 +17,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# VSCode
+# Editor configs
 .vscode/
+.DS_Store

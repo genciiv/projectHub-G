@@ -14,6 +14,7 @@ import Project from "./models/Project.js";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api", applicationRoutes);
+app.use("/api/users", userRoutes);
 
 // MongoDB + Server start
 const PORT = process.env.PORT || 5000;
