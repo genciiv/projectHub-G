@@ -10,6 +10,7 @@ const PostSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true, maxlength: 180 },
   body: { type: String, required: true, trim: true, maxlength: 20000 },
   tags: { type: [String], default: [], index: true },
+  coverUrl: { type: String, default: "" },
   comments: { type: [CommentSchema], default: [] },
   published: { type: Boolean, default: true, index: true }
 }, { timestamps: true });

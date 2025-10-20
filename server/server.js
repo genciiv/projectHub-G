@@ -17,6 +17,7 @@ import applicationRoutes from "./routes/applicationRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
 
@@ -47,6 +48,8 @@ app.use("/api", applicationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/uploads", uploadRoutes);
+
 
 
 // MongoDB + Server start

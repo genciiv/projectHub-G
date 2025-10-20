@@ -1,13 +1,13 @@
-// client/src/pages/BlogEditor.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../utils/api";
+import ImageUploader from "../components/ImageUploader";
 
 export default function BlogEditor(){
   const nav = useNavigate();
-  const { id } = useParams(); // kur editojmë
+  const { id } = useParams();
   const isEdit = Boolean(id);
-  const [form, setForm] = useState({ title:"", body:"", tags:"", published:true });
+  const [form, setForm] = useState({ title:"", body:"", tags:"", published:true, coverUrl:"" });
   const [err, setErr] = useState("");
 
   useEffect(()=>{
@@ -19,7 +19,8 @@ export default function BlogEditor(){
           title: p.title,
           body: p.body,
           tags: (p.tags||[]).join(", "),
-          published: !!p.published
+          published: !!p.published,
+          coverUrl: p.coverUrl || ""
         });
       }catch(e){ setErr(e.message); }
     })();
@@ -31,7 +32,7 @@ export default function BlogEditor(){
 
     const payload = {
       ...form,
-      tags: form.tags ? form.tags.split(",").map(s=>s.trim()).filter(Boolean) : []
+      tags: form.tags ? form.tags.split(",").map(s=>s.trim()).filter(Boolean) : [],
     };
 
     try{
@@ -40,7 +41,7 @@ export default function BlogEditor(){
         nav(`/blog/${id}`);
       } else {
         const created = await api("/api/posts", { method:"POST", body: JSON.stringify(payload) });
-        nav(`/blog/${created._id}`); // NAVIGO TE POSTI I RI
+        nav(`/blog/${created._id}`);
       }
     }catch(e){ setErr(e.message); }
   }
@@ -58,6 +59,14 @@ export default function BlogEditor(){
                     value={form.body} onChange={e=>setForm({...form, body: e.target.value})} required />
           <input className="input" placeholder="Tags (comma)" value={form.tags}
                  onChange={e=>setForm({...form, tags: e.target.value})} />
+
+          {/* Uploader i imazhit */}
+          <ImageUploader
+            value={form.coverUrl}
+            onChange={(url)=>setForm({...form, coverUrl: url})}
+            label="Cover image (opsionale)"
+          />
+
           <label className="row" style={{ gap: ".5rem" }}>
             <input type="checkbox" checked={form.published}
                    onChange={e=>setForm({...form, published: e.target.checked})} />
