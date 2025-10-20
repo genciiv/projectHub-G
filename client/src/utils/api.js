@@ -1,14 +1,27 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// client/src/utils/api.js
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export async function api(path, options = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    credentials: "include", // për cookie JWT
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
+  const url = path.startsWith("http") ? path : `${BASE}${path}`;
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  const res = await fetch(url, {
+    method: options.method || "GET",
+    headers,
+    body: options.body,
+    credentials: "include", // <<— SHUMË E RËNDËSISHME (dërgon cookie JWT)
   });
-  const data = await res.json().catch(() => ({}));
+
+  let data = null;
+  const text = await res.text();
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
   if (!res.ok) {
-    const msg = data?.message || `HTTP ${res.status}`;
+    const msg = (data && data.message) || `HTTP ${res.status}`;
     throw new Error(msg);
   }
   return data;

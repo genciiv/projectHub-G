@@ -1,3 +1,4 @@
+// client/src/components/PostCard.jsx
 import { Link } from "react-router-dom";
 
 export default function PostCard({ p }) {
@@ -12,7 +13,7 @@ export default function PostCard({ p }) {
       <p className="muted" style={{ marginBottom: ".6rem" }}>
         nga {p.author?.name || "Anon"} • {new Date(p.createdAt).toLocaleDateString()}
       </p>
-      <p>{p.body.slice(0,140)}{p.body.length>140?"…":""}</p>
+      <p>{(p.body || "").slice(0,140)}{(p.body || "").length>140?"…":""}</p>
       <div className="row" style={{ marginTop: ".8rem" }}>
         <Link className="btn btn--outline" to={`/blog/${p._id}`}>Lexo</Link>
       </div>

@@ -1,3 +1,4 @@
+// client/src/pages/BlogPost.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../utils/api";
@@ -8,12 +9,19 @@ export default function BlogPost(){
   const nav = useNavigate();
   const { user } = useAuth();
   const [p, setP] = useState(null);
+  const [err, setErr] = useState("");
   const [comment, setComment] = useState("");
   const isOwner = user && p?.author && user.id === p.author._id;
 
   async function load(){
-    const res = await api(`/api/posts/${id}`);
-    setP(res);
+    try{
+      const res = await api(`/api/posts/${id}`);
+      setP(res);
+      setErr("");
+    }catch(e){
+      setP(null);
+      setErr(e.message);
+    }
   }
   useEffect(()=>{ load(); /* eslint-disable-next-line */ }, [id]);
 
@@ -31,6 +39,7 @@ export default function BlogPost(){
     nav("/blog");
   }
 
+  if (err) return <div className="container"><div className="card alert alert--danger" style={{marginTop:"1rem"}}>{err}</div></div>;
   if (!p) return <div className="container"><div className="card" style={{marginTop:"1rem"}}>Duke ngarkuar…</div></div>;
 
   return (
@@ -55,13 +64,13 @@ export default function BlogPost(){
         <div style={{ whiteSpace:"pre-wrap" }}>{p.body}</div>
       </div>
 
-      {/* Komentet */}
       <div className="card" style={{ marginTop:"1rem" }}>
         <h3 style={{ marginBottom: ".6rem" }}>Komente ({p.comments?.length || 0})</h3>
 
         {user ? (
           <form className="form" onSubmit={addComment} style={{ marginBottom: "1rem" }}>
-            <textarea className="input" rows="4" placeholder="Shkruaj koment…" value={comment} onChange={e=>setComment(e.target.value)} />
+            <textarea className="input" rows="4" placeholder="Shkruaj koment…"
+                      value={comment} onChange={e=>setComment(e.target.value)} />
             <button className="btn" type="submit">Dërgo</button>
           </form>
         ) : (
