@@ -1,116 +1,66 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import { api } from "../utils/api";
-import ProjectMiniCard from "../components/ProjectMiniCard";
-import ApplicationMiniCard from "../components/ApplicationMiniCard";
-import ProfileEditor from "../components/ProfileEditor";
+import PostCard from "../components/PostCard";
 
-export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const [tab, setTab] = useState(
-    user?.role === "client" ? "projects" : "applications"
-  );
-  const [myProjects, setMyProjects] = useState([]);
-  const [myApps, setMyApps] = useState([]);
+export default function Blog() {
+  const [query, setQuery] = useState({ q:"", tags:"" });
+  const [data, setData] = useState({ items: [], page:1, pages:1, total:0 });
+  const [loading, setLoading] = useState(true);
 
-  async function loadProjects() {
-    const res = await api("/api/users/me/projects");
-    setMyProjects(res);
-  }
-  async function loadApps() {
-    const res = await api("/api/users/me/applications");
-    setMyApps(res);
+  function qs(obj){
+    const u = new URLSearchParams();
+    Object.entries(obj).forEach(([k,v])=>{ if(String(v||"").trim()!=="") u.set(k,v); });
+    return u.toString();
   }
 
-  useEffect(() => {
-    if (!user) return;
-    if (user.role === "client") loadProjects();
-    loadApps(); // edhe freelancer-ët e kanë të vlefshme
-    // eslint-disable-next-line
-  }, [user?.id]);
+  async function load(page=1){
+    setLoading(true);
+    try{
+      const q = qs({ ...query, page, limit: 9 });
+      const res = await api(`/api/posts?${q}`);
+      setData(res);
+    } finally { setLoading(false); }
+  }
+
+  useEffect(()=>{ load(1); /* eslint-disable-next-line */ }, [JSON.stringify(query)]);
 
   return (
     <div className="container">
-      <div className="card" style={{ marginTop: "1rem" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+      <div className="card card--hoverable" style={{ marginTop:"1rem" }}>
+        <div className="spread">
           <div>
-            <h2 style={{ marginBottom: ".2rem" }}>
-              Përshëndetje, {user?.name} 👋
-            </h2>
-            <div className="muted">
-              {user?.email} • Roli: {user?.role}
-            </div>
+            <h2 className="card__title" style={{ fontSize:"1.35rem" }}>Blog & Announcements</h2>
+            <div className="muted">Postime nga komuniteti.</div>
           </div>
-          <button className="btn btn--ghost" onClick={logout}>
-            Dil
-          </button>
+          <a className="btn" href="/blog/new">Shkruaj postim</a>
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: "1rem" }}>
-        <div style={{ display: "flex", gap: ".5rem", marginBottom: ".8rem" }}>
-          {user?.role === "client" && (
-            <button
-              className={`btn ${tab === "projects" ? "" : "btn--ghost"}`}
-              onClick={() => setTab("projects")}
-            >
-              Projektet e mia
-            </button>
-          )}
-          <button
-            className={`btn ${tab === "applications" ? "" : "btn--ghost"}`}
-            onClick={() => setTab("applications")}
-          >
-            Aplikimet e mia
-          </button>
-          <button
-            className={`btn ${tab === "profile" ? "" : "btn--ghost"}`}
-            onClick={() => setTab("profile")}
-          >
-            Profile Settings
-          </button>
-        </div>
+      <div className="card" style={{ marginTop:"1rem" }}>
+        <form className="form" onSubmit={(e)=>{e.preventDefault(); load(1);}}>
+          <input className="input" placeholder="Kërko në postime..." value={query.q} onChange={e=>setQuery({...query, q:e.target.value})}/>
+          <input className="input" placeholder="Tags (comma)" value={query.tags} onChange={e=>setQuery({...query, tags:e.target.value})}/>
+          <button className="btn" type="submit">Filtro</button>
+        </form>
+      </div>
 
-        {tab === "projects" && (
-          <>
-            {myProjects.length === 0 ? (
-              <p className="muted">
-                S’ke ende projekte.{" "}
-                <a href="/post-project">Posto një projekt</a>.
-              </p>
-            ) : (
+      <div className="section">
+        {loading ? <p className="muted">Duke ngarkuar…</p> : (
+          data.items.length === 0 ? (
+            <div className="card">Asnjë postim.</div>
+          ) : (
+            <>
               <div className="grid grid--3">
-                {myProjects.map((p) => (
-                  <ProjectMiniCard key={p._id} p={p} />
-                ))}
+                {data.items.map(p => <PostCard key={p._id} p={p} />)}
               </div>
-            )}
-          </>
-        )}
-
-        {tab === "applications" && (
-          <>
-            {myApps.length === 0 ? (
-              <p className="muted">
-                S’ke aplikuar ende. Shfleto <a href="/projects">projektet</a>.
-              </p>
-            ) : (
-              <div className="grid grid--3">
-                {myApps.map((a) => (
-                  <ApplicationMiniCard key={a._id} a={a} />
-                ))}
+              <div className="row" style={{ justifyContent:"center", marginTop:"1rem" }}>
+                <button className="pill" disabled={data.page<=1} onClick={()=>load(data.page-1)}>← Prev</button>
+                <span className="muted" style={{ padding: ".5rem .9rem" }}>Page {data.page}/{data.pages} • {data.total}</span>
+                <button className="pill" disabled={data.page>=data.pages} onClick={()=>load(data.page+1)}>Next →</button>
               </div>
-            )}
-          </>
+            </>
+          )
         )}
-
-        {tab === "profile" && <ProfileEditor />}
       </div>
     </div>
   );

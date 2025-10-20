@@ -4,59 +4,38 @@ import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 
+// Context
 import { AuthProvider } from "./context/AuthContext";
+
+// Layout & Guards
 import RootLayout from "./layout/RootLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Auth & Dashboard
+// Pages bazë
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
-// Faqet e ndara në file
-import Home from "./pages/Home";
-import Blog from "./pages/Blog";
-
-// Hapi 4
+// Projects
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import PostProject from "./pages/PostProject";
 
+
+// Blog
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import BlogEditor from "./pages/BlogEditor";
+
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: (
-      <RootLayout>
-        <Home />
-      </RootLayout>
-    ),
-  },
-  {
-    path: "/blog",
-    element: (
-      <RootLayout>
-        <Blog />
-      </RootLayout>
-    ),
-  },
+  { path: "/", element: <RootLayout><Home /></RootLayout> },
 
-  {
-    path: "/login",
-    element: (
-      <RootLayout>
-        <Login />
-      </RootLayout>
-    ),
-  },
-  {
-    path: "/register",
-    element: (
-      <RootLayout>
-        <Register />
-      </RootLayout>
-    ),
-  },
+  // Auth
+  { path: "/login", element: <RootLayout><Login /></RootLayout> },
+  { path: "/register", element: <RootLayout><Register /></RootLayout> },
 
+  // Dashboard (protected)
   {
     path: "/dashboard",
     element: (
@@ -68,22 +47,9 @@ const router = createBrowserRouter([
     ),
   },
 
-  {
-    path: "/projects",
-    element: (
-      <RootLayout>
-        <Projects />
-      </RootLayout>
-    ),
-  },
-  {
-    path: "/projects/:id",
-    element: (
-      <RootLayout>
-        <ProjectDetail />
-      </RootLayout>
-    ),
-  },
+  // Projects
+  { path: "/projects", element: <RootLayout><Projects /></RootLayout> },
+  { path: "/projects/:id", element: <RootLayout><ProjectDetail /></RootLayout> },
   {
     path: "/post-project",
     element: (
@@ -94,6 +60,31 @@ const router = createBrowserRouter([
       </RootLayout>
     ),
   },
+
+ 
+  // Blog
+  { path: "/blog", element: <RootLayout><Blog /></RootLayout> },
+  {
+    path: "/blog/new",
+    element: (
+      <RootLayout>
+        <ProtectedRoute>
+          <BlogEditor />
+        </ProtectedRoute>
+      </RootLayout>
+    ),
+  },
+  {
+    path: "/blog/edit/:id",
+    element: (
+      <RootLayout>
+        <ProtectedRoute>
+          <BlogEditor />
+        </ProtectedRoute>
+      </RootLayout>
+    ),
+  },
+  { path: "/blog/:id", element: <RootLayout><BlogPost /></RootLayout> },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
