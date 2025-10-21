@@ -3,8 +3,11 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-// Context & Layout
+// Contexts
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
+
+// Layout
 import RootLayout from "./layout/RootLayout.jsx";
 
 // Pages
@@ -20,6 +23,7 @@ import ProfileEdit from "./pages/ProfileEdit.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import Feed from "./pages/Feed.jsx"; // për feed-in e personalizuar (nëse e ke krijuar)
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -27,12 +31,14 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 // Styles
 import "./index.css";
 
+// Router configuration
 const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
+      { path: "feed", element: <Feed /> },
 
       // Projects
       { path: "projects", element: <Projects /> },
@@ -49,7 +55,7 @@ const router = createBrowserRouter([
       // Blog
       { path: "blog", element: <Blog /> },
       {
-        path: "blog/new", // rrugë statike për të shmangur konflikt me :id
+        path: "blog/new",
         element: (
           <ProtectedRoute>
             <BlogEditor />
@@ -69,7 +75,7 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Dashboard (protected)
+      // Dashboard
       {
         path: "dashboard",
         element: (
@@ -86,8 +92,11 @@ const router = createBrowserRouter([
   },
 ]);
 
+// Render App
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <AuthProvider>
-    <RouterProvider router={router} />
-  </AuthProvider>
+  <ThemeProvider>
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  </ThemeProvider>
 );

@@ -2,90 +2,162 @@
 import express from "express";
 import auth from "../middleware/auth.js";
 import Post from "../models/Post.js";
+import User from "../models/User.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
-// Krijo post
+// CREATE
 router.post("/", auth, async (req, res) => {
-  const { title, body, tags = [], published = true, coverUrl = "" } = req.body;
-  const arr = Array.isArray(tags)
-    ? tags
-    : String(tags).split(",").map((s) => s.trim()).filter(Boolean);
+  try {
+    const { title, body, tags = [], published = true, coverUrl = "" } = req.body;
+    if (!title || !body) return res.status(400).json({ message: "Titulli dhe përmbajtja janë të detyrueshme." });
 
-  const post = await Post.create({
-    author: req.userId,
-    title,
-    body,
-    tags: arr,
-    published,
-    coverUrl,
-  });
+    const arr = Array.isArray(tags) ? tags : String(tags).split(",").map(s=>s.trim()).filter(Boolean);
+    const post = await Post.create({ author: req.userId, title, body, tags: arr, published, coverUrl });
 
-  const populated = await Post.findById(post._id).populate("author", "name");
-  res.status(201).json(populated);
+    const populated = await Post.findById(post._id).populate("author", "name avatarUrl");
+    res.status(201).json(populated);
+  } catch (e) {
+    console.error("Create post error:", e);
+    res.status(500).json({ message: "Gabim serveri gjatë krijimit." });
+  }
 });
 
-// Merr lista postimesh
+// LIST
 router.get("/", async (req, res) => {
-  const { q, author, page = 1, limit = 9 } = req.query;
-  const filter = {};
-  if (author) filter.author = author;
-  if (q) filter.$text = { $search: q };
+  try {
+    const { q, author, page = 1, limit = 9 } = req.query;
+    const filter = {};
+    if (author) filter.author = author;
+    if (q) filter.$text = { $search: q };
 
-  const skip = (page - 1) * limit;
-  const [items, total] = await Promise.all([
-    Post.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit))
-      .populate("author", "name"),
-    Post.countDocuments(filter),
-  ]);
+    const skip = (Number(page) - 1) * Number(limit);
+    const [items, total] = await Promise.all([
+      Post.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).populate("author", "name avatarUrl"),
+      Post.countDocuments(filter),
+    ]);
 
-  res.json({ items, total });
+    res.json({ items, total, page: Number(page) });
+  } catch (e) {
+    console.error("List posts error:", e);
+    res.status(500).json({ message: "Gabim serveri gjatë listimit." });
+  }
 });
 
-// Merr një post
+// GET ONE
 router.get("/:id", async (req, res) => {
-  const post = await Post.findById(req.params.id)
-    .populate("author", "name")
-    .populate("comments.author", "name");
-  if (!post) return res.status(404).json({ message: "Not found" });
-  res.json(post);
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID e pavlefshme." });
+
+    const post = await Post.findById(id)
+      .populate("author", "name avatarUrl")
+      .populate("comments.author", "name avatarUrl");
+    if (!post) return res.status(404).json({ message: "Not found" });
+    res.json(post);
+  } catch (e) {
+    console.error("Get post error:", e);
+    res.status(500).json({ message: "Gabim serveri gjatë marrjes së postit." });
+  }
 });
 
-// Përditëso
+// UPDATE (owner)
 router.put("/:id", auth, async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post) return res.status(404).json({ message: "Not found" });
-  if (String(post.author) !== req.userId)
-    return res.status(403).json({ message: "Jo pronar" });
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID e pavlefshme." });
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: "Not found" });
+    if (String(post.author) !== req.userId) return res.status(403).json({ message: "Jo pronar" });
 
-  Object.assign(post, req.body);
-  await post.save();
-  const populated = await Post.findById(post._id).populate("author", "name");
-  res.json(populated);
+    const allowed = ["title", "body", "tags", "published", "coverUrl"];
+    for (const k of allowed) {
+      if (k in req.body) {
+        if (k === "tags") {
+          post.tags = Array.isArray(req.body.tags)
+            ? req.body.tags
+            : String(req.body.tags).split(",").map(s => s.trim()).filter(Boolean);
+        } else {
+          post[k] = req.body[k];
+        }
+      }
+    }
+    await post.save();
+    const populated = await Post.findById(post._id).populate("author", "name avatarUrl");
+    res.json(populated);
+  } catch (e) {
+    console.error("Update post error:", e);
+    res.status(500).json({ message: "Gabim serveri gjatë përditësimit." });
+  }
 });
 
-// Fshi
+// DELETE (owner)
 router.delete("/:id", auth, async (req, res) => {
-  const post = await Post.findById(req.params.id);
-  if (!post) return res.status(404).json({ message: "Not found" });
-  if (String(post.author) !== req.userId)
-    return res.status(403).json({ message: "Jo pronar" });
-  await post.deleteOne();
-  res.json({ ok: true });
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID e pavlefshme." });
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: "Not found" });
+    if (String(post.author) !== req.userId) return res.status(403).json({ message: "Jo pronar" });
+
+    await post.deleteOne();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("Delete post error:", e);
+    res.status(500).json({ message: "Gabim serveri gjatë fshirjes." });
+  }
 });
 
-// Koment
+// COMMENT
 router.post("/:id/comments", auth, async (req, res) => {
-  const { body } = req.body;
-  if (!body) return res.status(400).json({ message: "Comment required" });
-  const post = await Post.findById(req.params.id);
-  post.comments.push({ author: req.userId, body });
+  try {
+    const { id } = req.params;
+    const { body } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID e pavlefshme." });
+    if (!body) return res.status(400).json({ message: "Koment i zbrazët." });
+
+    const post = await Post.findById(id);
+    if (!post) return res.status(404).json({ message: "Not found" });
+
+    post.comments.push({ author: req.userId, body });
+    await post.save();
+    const populated = await Post.findById(post._id).populate("comments.author", "name avatarUrl");
+    res.status(201).json(populated);
+  } catch (e) {
+    console.error("Add comment error:", e);
+    res.status(500).json({ message: "Gabim serveri gjatë komentimit." });
+  }
+});
+
+// LIKE toggle
+router.post("/:id/like", auth, async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID e pavlefshme." });
+  const post = await Post.findById(id).select("likes");
+  if (!post) return res.status(404).json({ message: "Not found" });
+
+  const me = req.userId;
+  const has = post.likes.map(String).includes(String(me));
+  if (has) post.likes.pull(me);
+  else post.likes.addToSet(me);
   await post.save();
-  const populated = await Post.findById(post._id).populate("comments.author", "name");
-  res.status(201).json(populated);
+
+  res.json({ liked: !has, likesCount: post.likes.length });
+});
+
+// SAVE toggle (në User)
+router.post("/:id/save", auth, async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID e pavlefshme." });
+
+  const me = await User.findById(req.userId).select("savedPosts");
+  const has = me.savedPosts.map(String).includes(String(id));
+  if (has) me.savedPosts.pull(id);
+  else me.savedPosts.addToSet(id);
+  await me.save();
+
+  res.json({ saved: !has });
 });
 
 export default router;

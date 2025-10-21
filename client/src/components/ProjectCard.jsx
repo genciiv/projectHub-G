@@ -1,82 +1,56 @@
 // client/src/components/ProjectCard.jsx
-import React from "react";
 import { Link } from "react-router-dom";
 
-export default function ProjectCard({ p }) {
+export default function ProjectCard(props) {
+  // Prano si props.project ose props.p (kompatibilitet me kodin ekzistues)
+  const p = props.project || props.p || {};
+
+  const id = p._id;
+  const title = p.title || "Untitled project";
+  const description = p.description || "";
+  const coverUrl = p.coverUrl || "";
+  const budget = typeof p.budget === "number" ? p.budget : (p.budget ? Number(p.budget) : 0);
+  const ownerName = p.owner?.name || p.ownerName || "Anonim";
+  const skills = Array.isArray(p.skills) ? p.skills : [];
+
   return (
-    <div className="card card--hoverable" style={{ padding: "1.2rem" }}>
-      {/* Titulli */}
-      <h3 className="card__title">{p.title}</h3>
-      {/* Meta owner */}
-<p className="muted" style={{ marginTop: "-.3rem" }}>
-  nga {p.owner?.name || "Anon"}
-</p>
+    <div className="card card--hoverable" style={{ overflow: "hidden" }}>
+      {coverUrl ? (
+        <Link to={`/projects/${id}`}>
+          <img
+            src={coverUrl}
+            alt={title}
+            style={{ width: "100%", height: 150, objectFit: "cover", display: "block" }}
+          />
+        </Link>
+      ) : null}
 
+      <div className="card__body">
+        <Link to={`/projects/${id}`} className="card__title" style={{ display: "block", marginBottom: ".35rem" }}>
+          {title}
+        </Link>
 
-      {/* Skills si "tags" */}
-      <div
-        className="row"
-        style={{ margin: ".4rem 0 .8rem", flexWrap: "wrap", gap: ".4rem" }}
-      >
-        {(p.skills || []).slice(0, 4).map((s) => (
-          <span key={s} className="tag">
-            {s}
-          </span>
-        ))}
-        {/* Nëse s'ka skills, shfaq një placeholder */}
-        {(!p.skills || p.skills.length === 0) && (
-          <span className="muted" style={{ fontSize: ".9rem" }}>
-            No skills listed
-          </span>
+        {ownerName && (
+          <div className="muted" style={{ marginBottom: ".3rem" }}>
+            nga {ownerName} {budget ? `• $${budget}` : ""}
+          </div>
+        )}
+
+        {description && (
+          <p className="muted" style={{ margin: 0 }}>
+            {description.length > 120 ? description.slice(0, 117) + "..." : description}
+          </p>
+        )}
+
+        {/* Tags/skills */}
+        {!!skills.length && (
+          <div className="row" style={{ margin: ".5rem 0 0", gap: ".35rem", flexWrap: "wrap" }}>
+            {skills.slice(0, 4).map((s) => (
+              <span key={s} className="tag">{s}</span>
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Përshkrimi (i shkurtuar) */}
-      <p style={{ marginBottom: ".8rem", color: "var(--text)" }}>
-        {p.description?.length > 120
-          ? p.description.slice(0, 120) + "..."
-          : p.description}
-      </p>
-
-      {/* Info Meta */}
-      <div
-        className="row"
-        style={{
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: "0.6rem",
-          marginBottom: "1rem",
-        }}
-      >
-        <span className="muted" style={{ fontSize: ".9rem" }}>
-          💰 €{p.budgetMin}–€{p.budgetMax}
-        </span>
-        <span
-          className="muted"
-          style={{
-            fontSize: ".85rem",
-            textTransform: "capitalize",
-            background:
-              p.status === "open"
-                ? "rgba(75,210,143,.15)"
-                : "rgba(255,173,58,.15)",
-            color: p.status === "open" ? "#0d3a29" : "#774b00",
-            padding: ".25rem .6rem",
-            borderRadius: "8px",
-          }}
-        >
-          {p.status}
-        </span>
-      </div>
-
-      {/* Butoni View */}
-      <Link
-        to={`/projects/${p._id}`}
-        className="btn"
-        style={{ width: "100%", textAlign: "center" }}
-      >
-        View Project
-      </Link>
     </div>
   );
 }

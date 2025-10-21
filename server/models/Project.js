@@ -1,43 +1,20 @@
 // server/models/Project.js
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
-const ProjectSchema = new mongoose.Schema(
+const ProjectSchema = new Schema(
   {
-    owner: {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
-    title: { type: String, required: true, trim: true, maxlength: 160 },
-    description: { type: String, required: true, trim: true },
-    budgetMin: { type: Number, default: 0, min: 0 },
-    budgetMax: { type: Number, default: 0, min: 0 },
-    skills: { type: [String], default: [], index: true }, // index normal (JO text)
-    deadline: { type: Date },
-    status: {
-      type: String,
-      enum: ["open", "in_progress", "completed", "cancelled"],
-      default: "open",
-      index: true,
-    },
-    winner: { type: mongoose.Types.ObjectId, ref: "User" },
+    owner:      { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    title:      { type: String, required: true, trim: true },
+    description:{ type: String, required: true },
+    budget:     { type: Number, default: 0 },
+    skills:     [{ type: String }],
+    coverUrl:   { type: String, default: "" },
+    likes:      [{ type: Schema.Types.ObjectId, ref: "User" }], // ⇦
   },
   { timestamps: true }
 );
 
-// Text index vetëm për fushat string (OK me Fast Text Search)
-ProjectSchema.index({ title: "text", description: "text" });
-
-// Normalize + guard i vogël për buxhetet/skills
-ProjectSchema.pre("save", function (next) {
-  if (this.budgetMax && this.budgetMin > this.budgetMax) {
-    [this.budgetMin, this.budgetMax] = [this.budgetMax, this.budgetMin];
-  }
-  this.skills = (this.skills || [])
-    .map((s) => String(s).trim())
-    .filter(Boolean);
-  next();
-});
+ProjectSchema.index({ title: "text", description: "text", skills: "text" });
 
 export default mongoose.model("Project", ProjectSchema);

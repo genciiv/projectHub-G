@@ -1,45 +1,41 @@
 // server/routes/feedRoutes.js
 import express from "express";
 import auth from "../middleware/auth.js";
-import Friend from "../models/Friend.js";
+import User from "../models/User.js";
 import Post from "../models/Post.js";
 import Project from "../models/Project.js";
 
 const router = express.Router();
 
-// Feed (miqtë + vetja)
 router.get("/", auth, async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const page = Number(req.query.page || 1);
+  const limit = Number(req.query.limit || 10);
   const skip = (page - 1) * limit;
 
-  const rels = await Friend.find({
-    $or: [{ from: req.userId }, { to: req.userId }],
-    status: "accepted",
-  });
-  const friendIds = rels.map(r =>
-    String(r.from) === req.userId ? r.to : r.from
-  );
-
-  const ids = [req.userId, ...friendIds];
+  const me = await User.findById(req.userId).select("following");
+  const scope = [...me.following.map(String), String(req.userId)]; // miqtë + vetja
 
   const [posts, projects] = await Promise.all([
-    Post.find({ author: { $in: ids }, published: true })
-      .populate("author", "name")
+    Post.find({ author: { $in: scope } })
       .sort({ createdAt: -1 })
-      .limit(limit * 2),
-    Project.find({ owner: { $in: ids } })
-      .populate("owner", "name")
+      .limit(200)
+      .populate("author", "name avatarUrl")
+      .lean()
+      .then(arr => arr.map(x => ({ ...x, _type: "post" }))),
+    Project.find({ owner: { $in: scope } })
       .sort({ createdAt: -1 })
-      .limit(limit * 2),
+      .limit(200)
+      .populate("owner", "name avatarUrl")
+      .lean()
+      .then(arr => arr.map(x => ({ ...x, _type: "project" }))),
   ]);
 
-  const merged = [
-    ...posts.map(p => ({ _id: p._id, type: "post", createdAt: p.createdAt, data: p })),
-    ...projects.map(p => ({ _id: p._id, type: "project", createdAt: p.createdAt, data: p })),
-  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const merged = [...posts, ...projects].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
-  const items = merged.slice(skip, skip + Number(limit));
-  res.json({ items, total: merged.length });
+  const items = merged.slice(skip, skip + limit);
+  res.json({ items, page, total: merged.length });
 });
 
 export default router;

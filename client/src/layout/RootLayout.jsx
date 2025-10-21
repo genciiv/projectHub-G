@@ -1,55 +1,80 @@
 // client/src/layout/RootLayout.jsx
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "../components/ThemeToggle";
 
-export default function RootLayout({ children }) {
+function Avatar({ name, url, size = 28 }) {
+  const src =
+    url ||
+    `https://api.dicebear.com/7.4/initials/svg?seed=${encodeURIComponent(name || "User")}`;
+  return (
+    <img
+      src={src}
+      alt={name || "User"}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        border: "1px solid var(--border)",
+        objectFit: "cover",
+      }}
+    />
+  );
+}
+
+export default function RootLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  const isActive = (to) =>
+    pathname === to ? { color: "var(--accent)", fontWeight: 700 } : {};
 
   return (
     <>
-      {/* Header / Navbar */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          background: "#ffffffcc",
-          backdropFilter: "saturate(180%) blur(8px)",
-          borderBottom: "1px solid #e5e7eb",
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: ".7rem 1rem",
-          }}
-        >
-          {/* Left: brand + nav */}
-          <div className="row" style={{ gap: ".8rem" }}>
-            <Link to="/" className="card__title" style={{ fontSize: "1.05rem" }}>
-              ProjectHub-G
+      {/* NAVBAR */}
+      <header className="navbar">
+        <div className="container nav-inner">
+          {/* Brand + nav */}
+          <nav className="nav-left">
+            <Link to="/" className="brand">
+              <span className="brand-dot" /> ProjectHub-G
             </Link>
-            <Link to="/projects">Projects</Link>
-            <Link to="/blog">Blog</Link>
-          </div>
+            <div className="nav-links">
+              <Link to="/feed" style={isActive("/feed")} className="nav-link">
+                Feed
+              </Link>
+              <Link to="/projects" style={isActive("/projects")} className="nav-link">
+                Projects
+              </Link>
+              <Link to="/blog" style={isActive("/blog")} className="nav-link">
+                Blog
+              </Link>
+            </div>
+          </nav>
 
-          {/* Right: auth area */}
-          <div className="row" style={{ gap: ".6rem" }}>
+          {/* Actions */}
+          <div className="nav-right">
+            <ThemeToggle />
+
             {user ? (
               <>
-                <span className="muted">
-                  Hi,{" "}
-                  <Link to={`/profile/${user.id || user._id}`}>
-                    {user.name || "User"}
-                  </Link>
-                </span>
-                <Link className="btn btn--outline" to="/dashboard">
-                  Dashboard
+                <Link className="btn btn--outline hide-sm" to="/post-project">
+                  + Projekt
                 </Link>
+                <Link className="btn btn--outline hide-sm" to="/blog/new">
+                  + Postim
+                </Link>
+
+                <Link
+                  to={`/profile/${user._id || user.id}`}
+                  className="nav-profile"
+                  title="Profili im"
+                >
+                  <Avatar name={user.name} url={user.avatarUrl} />
+                  <span className="hide-sm">{user.name || "User"}</span>
+                </Link>
+
                 <button
                   className="btn"
                   onClick={async () => {
@@ -74,10 +99,21 @@ export default function RootLayout({ children }) {
         </div>
       </header>
 
-      {/* Content */}
-      <main style={{ paddingBottom: "2rem" }}>
-        {children || <Outlet />}
+      {/* CONTAINER */}
+      <main className="main">
+        <Outlet />
       </main>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div className="container footer-inner">
+          <span>© {new Date().getFullYear()} ProjectHub-G</span>
+          <div className="row" style={{ gap: ".75rem" }}>
+            <Link to="/projects">Projects</Link>
+            <Link to="/blog">Blog</Link>
+          </div>
+        </div>
+      </footer>
     </>
   );
 }
