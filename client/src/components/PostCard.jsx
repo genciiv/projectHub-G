@@ -1,39 +1,47 @@
 // client/src/components/PostCard.jsx
 import { Link } from "react-router-dom";
 
-export default function PostCard({ p }) {
-  const cover = p.coverUrl || null;
+export default function PostCard(props) {
+  // lexo si 'post' ose si 'p' për kompatibilitet me thirrjet e vjetra
+  const p = props.post || props.p || {};
+
+  const id = p._id;
+  const title = p.title || "Untitled";
+  const author = p.author?.name || "Anonim";
+  const coverUrl = p.coverUrl || "";
+  const created = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "";
 
   return (
-    <article className={`card card--hoverable ${cover ? "card--media" : "card--compact"}`}>
+    <div className="card card--hoverable" style={{ overflow: "hidden" }}>
+      {/* Cover (opsional) */}
+      {coverUrl ? (
+        <Link to={`/blog/${id}`}>
+          <img
+            src={coverUrl}
+            alt={title}
+            style={{ width: "100%", height: 150, objectFit: "cover", display: "block" }}
+          />
+        </Link>
+      ) : null}
 
-      {cover && (
-        <img className="media" src={cover} alt="" loading="lazy" />
-      )}
+      <div className="card__body">
+        <Link to={`/blog/${id}`} className="card__title" style={{ display: "block", marginBottom: ".3rem" }}>
+          {title}
+        </Link>
 
-      <div className={cover ? "body" : ""}>
-        <h3 className="card__title">
-          <Link to={`/blog/${p._id}`}>{p.title}</Link>
-        </h3>
+        <div className="muted" style={{ marginBottom: ".4rem" }}>
+          {author}{created ? ` • ${created}` : ""}
+        </div>
 
-        <p className="muted" style={{ marginTop: "-.2rem", marginBottom: ".4rem" }}>
-          nga <Link to={p.author?._id ? `/u/${p.author._id}` : "#"}>{p.author?.name || "Anon"}</Link> • {new Date(p.createdAt).toLocaleDateString()}
-        </p>
-
-        {(p.tags?.length > 0) && (
-          <div className="row" style={{ margin: ".2rem 0 .5rem" }}>
-            {p.tags.slice(0, 4).map(t => <span key={t} className="tag">{t}</span>)}
+        {/* Tags (opsionale) */}
+        {!!(p.tags && p.tags.length) && (
+          <div className="row" style={{ gap: ".35rem", flexWrap: "wrap", marginTop: ".2rem" }}>
+            {p.tags.slice(0, 4).map((t) => (
+              <span key={t} className="tag">#{t}</span>
+            ))}
           </div>
         )}
-
-        <p style={{ margin: 0 }}>
-          {(p.body || "").slice(0, 120)}{(p.body || "").length > 120 ? "…" : ""}
-        </p>
-
-        <div className="row" style={{ marginTop: ".7rem" }}>
-          <Link className="btn btn--outline" to={`/blog/${p._id}`}>Lexo</Link>
-        </div>
       </div>
-    </article>
+    </div>
   );
 }

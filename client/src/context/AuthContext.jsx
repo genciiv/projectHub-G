@@ -1,60 +1,58 @@
 // client/src/context/AuthContext.jsx
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../utils/api";
 
-const AuthCtx = createContext(null);
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Ngarko seancën në hyrje të aplikacionit
+  // ngarko sesionin
   useEffect(() => {
     (async () => {
       try {
         const me = await api("/api/auth/me");
-        setUser(me);
+        setUser(me); // me._id duhet të ekzistojë
       } catch {
         setUser(null);
       } finally {
-        setReady(true);
+        setLoading(false);
       }
     })();
   }, []);
 
-  // ==== FUNKSIONE AUTH ====
   async function login(email, password) {
-    // kthen user ose hedh error
     const res = await api("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    // disa backend-e kthejnë vetëm {id,name}; për siguri, rimerr /me
+    // pas login, rimerr /me që të kemi objektin e plotë
     const me = await api("/api/auth/me").catch(() => res);
     setUser(me);
     return me;
   }
 
-  async function register({ name, email, password, role }) {
+  async function register({ name, email, password, role = "Freelancer" }) {
     await api("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({ name, email, password, role }),
     });
-    // auto-login pas regjistrimit
     return await login(email, password);
   }
 
   async function logout() {
-    try {
-      await api("/api/auth/logout", { method: "POST" });
-    } catch {}
+    await api("/api/auth/logout", { method: "POST" });
     setUser(null);
   }
 
-  const value = { user, setUser, ready, login, register, logout };
-  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  return useContext(AuthCtx);
+  return useContext(AuthContext);
 }
