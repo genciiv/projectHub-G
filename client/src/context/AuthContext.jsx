@@ -1,55 +1,58 @@
+// client/src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../utils/api";
 
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // {id, name, email, role}
-  const [loading, setLoading] = useState(true); // për /me në mount
+  const [user, setUser] = useState(null);
+  const [ready, setReady] = useState(false);
 
+  // Ngarko seancën në hyrje të aplikacionit
   useEffect(() => {
-    let mounted = true;
     (async () => {
       try {
         const me = await api("/api/auth/me");
-        if (mounted) setUser(me);
+        setUser(me);
       } catch {
-        if (mounted) setUser(null);
+        setUser(null);
       } finally {
-        if (mounted) setLoading(false);
+        setReady(true);
       }
     })();
-    return () => (mounted = false);
   }, []);
 
+  // ==== FUNKSIONE AUTH ====
   async function login(email, password) {
-    const { user } = await api("/api/auth/login", {
+    // kthen user ose hedh error
+    const res = await api("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    setUser(user);
-    return user;
+    // disa backend-e kthejnë vetëm {id,name}; për siguri, rimerr /me
+    const me = await api("/api/auth/me").catch(() => res);
+    setUser(me);
+    return me;
   }
 
-  async function register(payload) {
+  async function register({ name, email, password, role }) {
     await api("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ name, email, password, role }),
     });
-    // pas register → auto-login për komoditet (opsionale)
-    return login(payload.email, payload.password);
+    // auto-login pas regjistrimit
+    return await login(email, password);
   }
 
   async function logout() {
-    await api("/api/auth/logout", { method: "POST" });
+    try {
+      await api("/api/auth/logout", { method: "POST" });
+    } catch {}
     setUser(null);
   }
 
-  return (
-    <AuthCtx.Provider value={{ user, loading, login, register, logout }}>
-      {children}
-    </AuthCtx.Provider>
-  );
+  const value = { user, setUser, ready, login, register, logout };
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
 export function useAuth() {

@@ -1,69 +1,83 @@
-// import React...
-import { Link } from "react-router-dom";
-import { useEffect } from "react";
+// client/src/layout/RootLayout.jsx
+import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function RootLayout({ children }) {
-  const { user } = useAuth();
-
-  // Ruaj gjendjen e temës në localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark")
-      document.documentElement.setAttribute("data-theme", "dark");
-  }, []);
-
-  function toggleTheme() {
-    const isDark =
-      document.documentElement.getAttribute("data-theme") === "dark";
-    if (isDark) {
-      document.documentElement.removeAttribute("data-theme");
-      localStorage.setItem("theme", "light");
-    } else {
-      document.documentElement.setAttribute("data-theme", "dark");
-      localStorage.setItem("theme", "dark");
-    }
-  }
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
-      <header className="header">
-        <div className="container header__inner">
-          <Link to="/" className="brand">
-            ProjectHub
-          </Link>
-          <nav className="nav">
-            <Link to="/projects" className="btn btn--ghost">
-              Projects
+      {/* Header / Navbar */}
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          background: "#ffffffcc",
+          backdropFilter: "saturate(180%) blur(8px)",
+          borderBottom: "1px solid #e5e7eb",
+        }}
+      >
+        <div
+          className="container"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: ".7rem 1rem",
+          }}
+        >
+          {/* Left: brand + nav */}
+          <div className="row" style={{ gap: ".8rem" }}>
+            <Link to="/" className="card__title" style={{ fontSize: "1.05rem" }}>
+              ProjectHub-G
             </Link>
-            <Link to="/blog" className="btn btn--ghost">
-              Blog
-            </Link>
-            <button
-              className="btn btn--outline"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              Theme
-            </button>
+            <Link to="/projects">Projects</Link>
+            <Link to="/blog">Blog</Link>
+          </div>
+
+          {/* Right: auth area */}
+          <div className="row" style={{ gap: ".6rem" }}>
             {user ? (
-              <Link to="/dashboard" className="btn">
-                Dashboard
-              </Link>
+              <>
+                <span className="muted">
+                  Hi,{" "}
+                  <Link to={`/profile/${user.id || user._id}`}>
+                    {user.name || "User"}
+                  </Link>
+                </span>
+                <Link className="btn btn--outline" to="/dashboard">
+                  Dashboard
+                </Link>
+                <button
+                  className="btn"
+                  onClick={async () => {
+                    await logout();
+                    navigate("/login");
+                  }}
+                >
+                  Dil
+                </button>
+              </>
             ) : (
               <>
-                <Link to="/login" className="btn btn--outline">
-                  Login
+                <Link className="btn btn--outline" to="/login">
+                  Hyr
                 </Link>
-                <Link to="/register" className="btn">
-                  Register
+                <Link className="btn" to="/register">
+                  Regjistrohu
                 </Link>
               </>
             )}
-          </nav>
+          </div>
         </div>
       </header>
-      <main className="section">{children}</main>
+
+      {/* Content */}
+      <main style={{ paddingBottom: "2rem" }}>
+        {children || <Outlet />}
+      </main>
     </>
   );
 }

@@ -1,41 +1,73 @@
 // client/src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+
+// Context & Layout
+import { AuthProvider } from "./context/AuthContext.jsx";
+import RootLayout from "./layout/RootLayout.jsx";
+
+// Pages
+import Home from "./pages/Home.jsx";
+import Projects from "./pages/Projects.jsx";
+import ProjectDetail from "./pages/ProjectDetail.jsx";
+import Blog from "./pages/Blog.jsx";
+import BlogPost from "./pages/BlogPost.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Profile from "./pages/Profile.jsx";
+import ProfileEdit from "./pages/ProfileEdit.jsx";
+import PostProject from "./pages/PostProject.jsx";
+import BlogEditor from "./pages/BlogEditor.jsx";
+
+// Components
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+
+// Styles
 import "./index.css";
 
-// Context
-import { AuthProvider } from "./context/AuthContext";
-
-// Layout & Guards
-import RootLayout from "./layout/RootLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
-
-// Pages bazë
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-
-// Projects
-import Projects from "./pages/Projects";
-import ProjectDetail from "./pages/ProjectDetail";
-import PostProject from "./pages/PostProject";
-
-
-// Blog
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import BlogEditor from "./pages/BlogEditor";
-
 const router = createBrowserRouter([
-  { path: "/", element: <RootLayout><Home /></RootLayout> },
-
-  // Auth
-  { path: "/login", element: <RootLayout><Login /></RootLayout> },
-  { path: "/register", element: <RootLayout><Register /></RootLayout> },
-
-  // Dashboard (protected)
+  {
+    path: "/",
+    element: (
+      <RootLayout>
+        <Home />
+      </RootLayout>
+    ),
+  },
+  {
+    path: "/projects",
+    element: (
+      <RootLayout>
+        <Projects />
+      </RootLayout>
+    ),
+  },
+  {
+    path: "/projects/:id",
+    element: (
+      <RootLayout>
+        <ProjectDetail />
+      </RootLayout>
+    ),
+  },
+  {
+    path: "/blog",
+    element: (
+      <RootLayout>
+        <Blog />
+      </RootLayout>
+    ),
+  },
+  {
+    path: "/blog/:id",
+    element: (
+      <RootLayout>
+        <BlogPost />
+      </RootLayout>
+    ),
+  },
   {
     path: "/dashboard",
     element: (
@@ -46,45 +78,60 @@ const router = createBrowserRouter([
       </RootLayout>
     ),
   },
-
-  // Projects
-  { path: "/projects", element: <RootLayout><Projects /></RootLayout> },
-  { path: "/projects/:id", element: <RootLayout><ProjectDetail /></RootLayout> },
   {
-    path: "/post-project",
+    path: "/profile/:id",
     element: (
       <RootLayout>
-        <ProtectedRoute>
-          <PostProject />
-        </ProtectedRoute>
+        <Profile />
       </RootLayout>
     ),
   },
-
- 
-  // Blog
-  { path: "/blog", element: <RootLayout><Blog /></RootLayout> },
   {
-    path: "/blog/new",
+    path: "/profile/edit",
     element: (
       <RootLayout>
         <ProtectedRoute>
-          <BlogEditor />
+          <ProfileEdit />
         </ProtectedRoute>
       </RootLayout>
     ),
   },
   {
-    path: "/blog/edit/:id",
+  path: "/post-project",
+  element: (
+    <RootLayout>
+      <ProtectedRoute>
+        <PostProject />
+      </ProtectedRoute>
+    </RootLayout>
+  ),
+},
+{
+  path: "/blog/new",
+  element: (
+    <RootLayout>
+      <ProtectedRoute>
+        <BlogEditor />
+      </ProtectedRoute>
+    </RootLayout>
+  ),
+},
+  {
+    path: "/login",
     element: (
       <RootLayout>
-        <ProtectedRoute>
-          <BlogEditor />
-        </ProtectedRoute>
+        <Login />
       </RootLayout>
     ),
   },
-  { path: "/blog/:id", element: <RootLayout><BlogPost /></RootLayout> },
+  {
+    path: "/register",
+    element: (
+      <RootLayout>
+        <Register />
+      </RootLayout>
+    ),
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(

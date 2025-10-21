@@ -1,1 +1,94 @@
 @import "./styles/base.css";
+
+/* ===== CARD GRID STYLE ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.card {
+  background: var(--card-bg, #fff);
+  border: 1px solid #e4e4e7;
+  border-radius: 14px;
+  padding: 1rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card img {
+  border-radius: 10px;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  margin-bottom: 0.7rem;
+}
+
+/* ===== CARD TEXT ===== */
+.card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.tag {
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* ===== GRID WRAPPER ===== */
+.section {
+  margin-top: 1.5rem;
+}
+
+.grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #4338ca;
+}
+
+.btn--outline {
+  background: transparent;
+  border: 1px solid #4f46e5;
+  color: #4f46e5;
+}
+
+.btn--outline:hover {
+  background: #4f46e5;
+  color: #fff;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .card img {
+    height: 160px;
+  }
+  .card__title {
+    font-size: 1rem;
+  }
+}

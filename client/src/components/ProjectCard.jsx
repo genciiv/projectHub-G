@@ -7,6 +7,11 @@ export default function ProjectCard({ p }) {
     <div className="card card--hoverable" style={{ padding: "1.2rem" }}>
       {/* Titulli */}
       <h3 className="card__title">{p.title}</h3>
+      {/* Meta owner */}
+<p className="muted" style={{ marginTop: "-.3rem" }}>
+  nga {p.owner?.name || "Anon"}
+</p>
+
 
       {/* Skills si "tags" */}
       <div

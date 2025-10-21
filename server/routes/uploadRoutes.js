@@ -1,37 +1,27 @@
+// server/routes/uploadRoutes.js
 import express from "express";
 import multer from "multer";
-import auth from "../middleware/auth.js";
+import fs from "fs/promises";
 import cloudinary from "../utils/cloudinary.js";
-import stream from "stream";
+import auth from "../middleware/auth.js";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
 
-/**
- * POST /api/uploads/image
- * Form-Data: file (image)
- * Return: { url }
- */
+// multer temp storage
+const upload = multer({ dest: "uploads/" });
+
+// Ngarko në Cloudinary
 router.post("/image", auth, upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-
-    // Krijo një stream dhe dërgo drejt Cloudinary
-    const bufferStream = new stream.PassThrough();
-    bufferStream.end(req.file.buffer);
-
+    const path = req.file.path;
     const result = await new Promise((resolve, reject) => {
-      const cld = cloudinary.uploader.upload_stream(
-        {
-          folder: "projecthub/blog",
-          resource_type: "image",
-          transformation: [{ width: 1600, crop: "limit" }], // limit madhësinë
-        },
-        (err, result) => (err ? reject(err) : resolve(result))
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "projecthub/blog" },
+        (err, res) => (err ? reject(err) : resolve(res))
       );
-      bufferStream.pipe(cld);
+      import("fs").then(fs => fs.createReadStream(path).pipe(stream));
     });
-
+    await fs.unlink(path);
     res.json({ url: result.secure_url });
   } catch (e) {
     console.error("Upload error:", e);

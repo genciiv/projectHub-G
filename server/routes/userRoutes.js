@@ -1,46 +1,59 @@
+// server/routes/userRoutes.js
 import express from "express";
 import auth from "../middleware/auth.js";
 import User from "../models/User.js";
+import Post from "../models/Post.js";
 import Project from "../models/Project.js";
-import Application from "../models/Application.js";
 
 const router = express.Router();
 
-/** Projektet e mia (si client/owner) */
-router.get("/me/projects", auth, async (req, res) => {
-  const items = await Project.find({ owner: req.userId })
-    .sort({ createdAt: -1 })
-    .select("_id title status budgetMin budgetMax skills createdAt winner");
-  res.json(items);
+/**
+ * GET /api/users/:id
+ * Merr profilin publik (pa password)
+ */
+router.get("/:id", async (req, res) => {
+  const u = await User.findById(req.params.id).select("name email role avatarUrl bio createdAt");
+  if (!u) return res.status(404).json({ message: "User not found" });
+  res.json(u);
 });
 
-/** Aplikimet e mia (si freelancer) me të dhënat e projektit */
-router.get("/me/applications", auth, async (req, res) => {
-  const apps = await Application.find({ applicant: req.userId })
-    .sort({ createdAt: -1 })
-    .populate("project", "title status budgetMin budgetMax owner")
-    .select("_id project coverLetter bidAmount etaDays status createdAt");
-  res.json(apps);
+/**
+ * PUT /api/users/:id
+ * Përditëson profilin (vetëm pronari)
+ * Body lejon: name, bio, avatarUrl
+ */
+router.put("/:id", auth, async (req, res) => {
+  if (req.userId !== req.params.id) {
+    return res.status(403).json({ message: "Not allowed" });
+  }
+  const allowed = ["name", "bio", "avatarUrl"];
+  const update = {};
+  for (const k of allowed) if (k in req.body) update[k] = req.body[k];
+
+  const u = await User.findByIdAndUpdate(req.params.id, update, { new: true })
+    .select("name email role avatarUrl bio createdAt");
+  res.json(u);
 });
 
-/** Përditëso profilin (pa ndryshuar rolin) */
-router.put("/me", auth, async (req, res) => {
-  const allowed = ["name", "bio", "avatarUrl", "skills"];
-  const patch = {};
-  for (const k of allowed) if (k in req.body) patch[k] = req.body[k];
-
-  // Normalizim i skills: prano string “a, b, c” ose array
-  if (typeof patch.skills === "string") {
-    patch.skills = patch.skills
-      .split(",")
-      .map((s) => String(s).trim())
-      .filter(Boolean);
+/**
+ * DELETE /api/users/:id
+ * Fshin llogarinë (vetëm pronari)
+ * Fshin edhe postet & projektet e tij
+ */
+router.delete("/:id", auth, async (req, res) => {
+  if (req.userId !== req.params.id) {
+    return res.status(403).json({ message: "Not allowed" });
   }
 
-  const user = await User.findByIdAndUpdate(req.userId, patch, {
-    new: true,
-  }).select("-passwordHash");
-  res.json(user);
+  // Fshi varësitë
+  await Promise.all([
+    Post.deleteMany({ author: req.params.id }),
+    Project.deleteMany({ owner: req.params.id }),
+  ]);
+
+  await User.findByIdAndDelete(req.params.id);
+  // pastrimi i cookie-t le të bëhet në frontend duke thirrur /auth/logout para/ose pas kësaj
+  res.json({ ok: true });
 });
 
 export default router;

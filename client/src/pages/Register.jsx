@@ -1,74 +1,71 @@
-import React, { useState } from "react";
+// client/src/pages/Register.jsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
-  const { register } = useAuth();
   const nav = useNavigate();
+  const { register } = useAuth();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "freelancer",
+    role: "Freelancer", // ose "Client" nëse ke dy role
   });
-  const [error, setError] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  async function onSubmit(e) {
+  async function submit(e) {
     e.preventDefault();
-    setError("");
+    setErr("");
+    setBusy(true);
     try {
-      await register(form);
-      nav("/dashboard");
-    } catch (err) {
-      setError(err.message);
+      await register(form);        // <<< këtu thirret nga AuthContext
+      nav("/");                    // pas suksesit kthehu në Home (ose /dashboard)
+    } catch (e) {
+      setErr(e.message || "Gabim regjistrimi");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <div className="container" style={{ maxWidth: 520 }}>
-      <div className="card" style={{ marginTop: "2rem" }}>
-        <h2 style={{ marginBottom: ".5rem" }}>Regjistrim</h2>
-        <p className="muted" style={{ marginBottom: "1rem" }}>
-          Krijo një llogari për të postuar ose aplikuar në projekte.
-        </p>
-        {error && (
-          <div className="alert alert--danger" style={{ marginBottom: "1rem" }}>
-            {error}
+    <div className="container" style={{ maxWidth: 580 }}>
+      <div className="card card--hoverable" style={{ marginTop: "1rem" }}>
+        <h2 className="card__title">Regjistrim</h2>
+        <p className="muted">Krijo një llogari për të postuar ose aplikuar në projekte.</p>
+
+        {err && (
+          <div className="alert alert--danger" style={{ marginTop: ".8rem" }}>
+            {err}
           </div>
         )}
-        <form onSubmit={onSubmit} className="form">
-          <label className="label">
-            Emri i plotë
-            <input
-              className="input"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-          </label>
 
-          <label className="label">
-            Email
-            <input
-              className="input"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
-          </label>
-
-          <label className="label">
-            Fjalëkalimi
-            <input
-              className="input"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              minLength={6}
-            />
-          </label>
+        <form className="form" onSubmit={submit} style={{ marginTop: ".8rem" }}>
+          <input
+            className="input"
+            placeholder="Emri i plotë"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+          <input
+            className="input"
+            placeholder="Email"
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+          />
+          <input
+            className="input"
+            placeholder="Fjalëkalimi"
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
 
           <label className="label">
             Roli
@@ -77,23 +74,15 @@ export default function Register() {
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
             >
-              <option value="freelancer">Freelancer</option>
-              <option value="client">Client</option>
+              <option>Freelancer</option>
+              <option>Client</option>
             </select>
           </label>
 
-          <button
-            className="btn"
-            type="submit"
-            style={{ width: "100%", marginTop: "0.5rem" }}
-          >
-            Krijo llogari
+          <button className="btn" type="submit" disabled={busy}>
+            {busy ? "Duke krijuar…" : "Krijo llogari"}
           </button>
         </form>
-
-        <div style={{ marginTop: "1rem" }}>
-          Ke llogari? <Link to="/login">Hyr këtu</Link>
-        </div>
       </div>
     </div>
   );
