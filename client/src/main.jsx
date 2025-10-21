@@ -1,8 +1,13 @@
+// client/src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
+// Context & Layout
+import { AuthProvider } from "./context/AuthContext.jsx";
 import RootLayout from "./layout/RootLayout.jsx";
+
+// Pages
 import Home from "./pages/Home.jsx";
 import Projects from "./pages/Projects.jsx";
 import ProjectDetail from "./pages/ProjectDetail.jsx";
@@ -11,11 +16,15 @@ import Blog from "./pages/Blog.jsx";
 import BlogPost from "./pages/BlogPost.jsx";
 import BlogEditor from "./pages/BlogEditor.jsx";
 import Profile from "./pages/Profile.jsx";
+import ProfileEdit from "./pages/ProfileEdit.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import { AuthProvider } from "./context/AuthContext.jsx";
+
+// Components
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+
+// Styles
 import "./index.css";
 
 const router = createBrowserRouter([
@@ -23,41 +32,56 @@ const router = createBrowserRouter([
     path: "/",
     element: <RootLayout />,
     children: [
-      { path: "/", element: <Home /> },
-      { path: "/projects", element: <Projects /> },
-      { path: "/projects/:id", element: <ProjectDetail /> },
+      { index: true, element: <Home /> },
+
+      // Projects
+      { path: "projects", element: <Projects /> },
+      { path: "projects/:id", element: <ProjectDetail /> },
       {
-        path: "/post-project",
+        path: "post-project",
         element: (
           <ProtectedRoute>
             <PostProject />
           </ProtectedRoute>
         ),
       },
-      { path: "/blog", element: <Blog /> },
+
+      // Blog
+      { path: "blog", element: <Blog /> },
       {
-        path: "/blog/new", // <--- kjo rrugë statike ka prioritet mbi /blog/:id
+        path: "blog/new", // rrugë statike për të shmangur konflikt me :id
         element: (
           <ProtectedRoute>
             <BlogEditor />
           </ProtectedRoute>
         ),
       },
+      { path: "blog/:id", element: <BlogPost /> },
+
+      // Profile
+      { path: "profile/:id", element: <Profile /> },
       {
-        path: "/blog/:id", // për postet ekzistuese
-        element: <BlogPost />,
+        path: "profile/edit",
+        element: (
+          <ProtectedRoute>
+            <ProfileEdit />
+          </ProtectedRoute>
+        ),
       },
-      { path: "/profile/:id", element: <Profile /> },
+
+      // Dashboard (protected)
       {
-        path: "/dashboard",
+        path: "dashboard",
         element: (
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
         ),
       },
-      { path: "/login", element: <Login /> },
-      { path: "/register", element: <Register /> },
+
+      // Auth
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
     ],
   },
 ]);

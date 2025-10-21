@@ -6,8 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import ImageUploader from "../components/ImageUploader";
 
 export default function ProfileEdit() {
-  const { user } = useAuth();
   const nav = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: "", bio: "", avatarUrl: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -15,12 +15,11 @@ export default function ProfileEdit() {
   useEffect(() => {
     (async () => {
       try {
-        const id = user?.id || user?._id;
+        const id = user?._id || user?.id;
+        if (!id) return;
         const u = await api(`/api/users/${id}`);
         setForm({ name: u.name || "", bio: u.bio || "", avatarUrl: u.avatarUrl || "" });
-      } catch (e) {
-        setErr(e.message);
-      }
+      } catch (e) { setErr(e.message); }
     })();
   }, [user]);
 
@@ -28,7 +27,7 @@ export default function ProfileEdit() {
     e.preventDefault();
     setBusy(true); setErr("");
     try {
-      const id = user?.id || user?._id;
+      const id = user?._id || user?.id;
       await api(`/api/users/${id}`, {
         method: "PUT",
         body: JSON.stringify(form),
@@ -44,8 +43,8 @@ export default function ProfileEdit() {
   if (!user) return <div className="container"><div className="card" style={{ marginTop: "1rem" }}>Duhet të hysh.</div></div>;
 
   return (
-    <div className="container" style={{ maxWidth: 720 }}>
-      <div className="card" style={{ marginTop: "1rem" }}>
+    <div className="container" style={{ maxWidth: 720, marginTop: "1rem" }}>
+      <div className="card">
         <h2 className="card__title">Edit Profile</h2>
         {err && <div className="alert alert--danger" style={{ marginTop: ".6rem" }}>{err}</div>}
 

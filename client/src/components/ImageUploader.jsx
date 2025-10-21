@@ -1,47 +1,56 @@
-import { useState } from "react";
+// client/src/components/ImageUploader.jsx
+import { useRef, useState } from "react";
 import { api } from "../utils/api";
 
-export default function ImageUploader({ value, onChange, label = "Cover image" }) {
+export default function ImageUploader({ value, onChange, label = "Imazh (opsionale)" }) {
+  const inputRef = useRef();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  async function onFile(e) {
+  async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setErr(""); setBusy(true);
+    setBusy(true); setErr("");
     try {
       const form = new FormData();
       form.append("file", file);
-
-      // përdor API direkt (pa api() sepse api() vendos Content-Type: json)
-      const BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const res = await fetch(`${BASE}/api/uploads/image`, {
+      const res = await fetch("/api/uploads/image", {
         method: "POST",
         body: form,
-        credentials: "include", // cookie JWT
+        credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Upload failed");
+      if (!res.ok) throw new Error(data.message || "Upload dështoi");
       onChange?.(data.url);
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Gabim gjatë ngarkimit.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="card">
-      <label className="label">
-        {label}
-        <input className="input" type="file" accept="image/*" onChange={onFile} disabled={busy} />
-      </label>
-      {err && <div className="alert alert--danger" style={{ marginTop: ".6rem" }}>{err}</div>}
-      {value && (
-        <div style={{ marginTop: ".6rem" }}>
-          <img src={value} alt="cover" style={{ width: "100%", borderRadius: 12, border: "1px solid var(--border)" }} />
+    <div className="uploader">
+      <label className="label">{label}</label>
+      {value ? (
+        <div className="row" style={{ gap: ".6rem", alignItems: "center" }}>
+          <img src={value} alt="" style={{ width: 96, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
+          <button type="button" className="btn btn--outline" onClick={() => onChange?.("")}>
+            Hiq
+          </button>
         </div>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--outline"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+        >
+          {busy ? "Duke ngarkuar…" : "Zgjidh imazh"}
+        </button>
       )}
+      {err && <div className="alert alert--danger" style={{ marginTop: ".4rem" }}>{err}</div>}
+      <input ref={inputRef} type="file" accept="image/*" hidden onChange={handleFile} />
     </div>
   );
 }

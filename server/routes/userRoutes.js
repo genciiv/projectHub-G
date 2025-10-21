@@ -9,7 +9,7 @@ const router = express.Router();
 
 /**
  * GET /api/users/:id
- * Merr profilin publik (pa password)
+ * Profil publik (pa password)
  */
 router.get("/:id", async (req, res) => {
   const u = await User.findById(req.params.id).select("name email role avatarUrl bio createdAt");
@@ -19,8 +19,7 @@ router.get("/:id", async (req, res) => {
 
 /**
  * PUT /api/users/:id
- * Përditëson profilin (vetëm pronari)
- * Body lejon: name, bio, avatarUrl
+ * Përditësim profili (vetëm pronari)
  */
 router.put("/:id", auth, async (req, res) => {
   if (req.userId !== req.params.id) {
@@ -37,22 +36,17 @@ router.put("/:id", auth, async (req, res) => {
 
 /**
  * DELETE /api/users/:id
- * Fshin llogarinë (vetëm pronari)
- * Fshin edhe postet & projektet e tij
+ * Fshirje llogarie (vetëm pronari) + fshin postet/projektet
  */
 router.delete("/:id", auth, async (req, res) => {
   if (req.userId !== req.params.id) {
     return res.status(403).json({ message: "Not allowed" });
   }
-
-  // Fshi varësitë
   await Promise.all([
     Post.deleteMany({ author: req.params.id }),
     Project.deleteMany({ owner: req.params.id }),
   ]);
-
   await User.findByIdAndDelete(req.params.id);
-  // pastrimi i cookie-t le të bëhet në frontend duke thirrur /auth/logout para/ose pas kësaj
   res.json({ ok: true });
 });
 
