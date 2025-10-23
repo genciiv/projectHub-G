@@ -28,7 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // ----- DB
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 if (!uri) {
   console.error("❌ MONGODB_URI mungon në .env");
   process.exit(1);
